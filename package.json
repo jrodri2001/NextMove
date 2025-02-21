@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A chess program that recognizes a chess position (board) and recommends a good Next move.",
   "type": "module",
-  "main": "index.js",
+  "main": "/src/api/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,6 +15,7 @@
   "author": "Julio Rodriguez",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.20.3",
     "chess.js": "^1.0.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
