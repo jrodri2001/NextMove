@@ -2,6 +2,7 @@
   "name": "nextmove",
   "version": "1.0.0",
   "description": "A chess program that recognizes a chess position (board) and recommends a good Next move.",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -14,8 +15,10 @@
   "author": "Julio Rodriguez",
   "license": "ISC",
   "dependencies": {
+    "chess.js": "^1.0.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "node": "^23.8.0",
     "stockfish": "^16.0.0"
   }
 }
