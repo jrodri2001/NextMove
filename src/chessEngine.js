@@ -1,44 +1,54 @@
-import { spawn } from "child_process";
+// chessEngine.js
+import { exec } from 'child_process';
 
-export function getBestMove(fen) {
-    return new Promise((resolve, reject) => {
-        const stockfish = spawn("stockfish");
+// Function to get best move using Stockfish
+export async function getBestMove(fen) {
+  return new Promise((resolve, reject) => {
+    const stockfish = exec('stockfish');
+    let isResolved = false;
 
-        // Function to send commands to Stockfish
-        function sendToStockfish(command) {
-            stockfish.stdin.write(command + "\n");
-        }
+    stockfish.stdin.write('uci\n');
+    stockfish.stdin.write('isready\n');
+    stockfish.stdin.write(`position fen ${fen}\n`);
+    stockfish.stdin.write('go depth 18\n');
 
-        // Listen for Stockfish output
-        stockfish.stdout.on("data", (data) => {
-            const output = data.toString();
+    let bestMove = '';
+    const timeout = setTimeout(() => {
+      if (!isResolved) {
+        stockfish.kill();
+        reject(new Error('Engine timeout - Please ensure Stockfish is responding'));
+      }
+    }, 15000);
 
-            // Look for best move response
-            if (output.includes("bestmove")) {
-                const bestMove = output.match(/bestmove (\S+)/)?.[1]; // Extract the actual move
-
-                if (bestMove) {
-                    // Resolve the promise with the best move
-                    resolve(bestMove);
-                } else {
-                    // Reject if no move is found
-                    reject(new Error("Failed to extract best move from Stockfish response."));
-                }
-
-                // Quit Stockfish after getting the best move
-                stockfish.stdin.write("quit\n");
-            }
-        });
-
-        // Handle errors
-        stockfish.on("error", (error) => {
-            reject(error);
-        });
-
-        // Send initial commands to Stockfish
-        sendToStockfish("uci");
-        sendToStockfish("isready");
-        sendToStockfish(`position fen ${fen}`);
-        sendToStockfish("go depth 15");
+    stockfish.stdout.on('data', (data) => {
+      console.log(data);
+      const match = data.match(/bestmove (\w+)/);
+      if (match && !isResolved) {
+        clearTimeout(timeout);
+        bestMove = match[1];
+        isResolved = true;
+        stockfish.kill();
+        resolve(bestMove);
+      }
     });
+
+    stockfish.stderr.on('data', (data) => {
+      console.error(`Stockfish Error: ${data}`);
+    });
+
+    stockfish.on('error', (error) => {
+      if (!isResolved) {
+        clearTimeout(timeout);
+        isResolved = true;
+        reject(new Error(`Stockfish process error: ${error.message}`));
+      }
+    });
+
+    stockfish.on('exit', () => {
+      if (!isResolved) {
+        clearTimeout(timeout);
+        reject(new Error('Engine terminated unexpectedly'));
+      }
+    });
+  });
 }
